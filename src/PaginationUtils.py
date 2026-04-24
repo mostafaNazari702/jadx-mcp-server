@@ -114,14 +114,14 @@ class PaginationUtils:
 
             response = await fetch_function(endpoint, params)
             if not isinstance(response, dict):
-                return {"error": f"Unexpected response type from {endpoint}: {type(response).__name__}"}
-            if response.get("error"):
+                return {"ok": False, "error": f"Unexpected response type from {endpoint}: {type(response).__name__}"}
+            if response.get("ok") is False or response.get("error"):
                 return response
 
             # Propagate upstream errors instead of silently building empty results
             if not isinstance(response, dict):
-                return {"error": f"Unexpected response type from {endpoint}: {type(response).__name__}"}
-            if response.get("error"):
+                return {"ok": False, "error": f"Unexpected response type from {endpoint}: {type(response).__name__}"}
+            if response.get("ok") is False or response.get("error"):
                 return response
 
             # Parse JSON response
@@ -145,11 +145,11 @@ class PaginationUtils:
 
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse JSON response from JADX: {e}")
-                return {"error": f"Invalid JSON response from JADX server: {str(e)}"}
+                return {"ok": False, "error": f"Invalid JSON response from JADX server: {str(e)}"}
 
         except Exception as e:
             logger.error(f"Error in paginated request to {endpoint}: {e}")
-            return {"error": f"Failed to fetch data from {endpoint}: {str(e)}"}
+            return {"ok": False, "error": f"Failed to fetch data from {endpoint}: {str(e)}"}
 
     @staticmethod
     def _build_standardized_response(parsed_response: dict, items: List[Any]) -> dict:
@@ -170,6 +170,7 @@ class PaginationUtils:
         pagination_info = parsed_response.get("pagination", {})
 
         result = {
+            "ok": True,
             "type": parsed_response.get("type", "paginated-list"),
             "items": items,
             "pagination": {
@@ -179,6 +180,11 @@ class PaginationUtils:
                 "count": pagination_info.get("count", len(items)),
                 "has_more": pagination_info.get("has_more", False)
             }
+        }
+        result["data"] = {
+            "type": result["type"],
+            "items": items,
+            "pagination": result["pagination"],
         }
 
         # Add navigation helpers if available
@@ -190,6 +196,20 @@ class PaginationUtils:
             result["pagination"]["current_page"] = pagination_info["current_page"]
             result["pagination"]["total_pages"] = pagination_info.get("total_pages", 1)
             result["pagination"]["page_size"] = pagination_info.get("page_size", 0)
+
+        reserved_keys = {
+            "ok",
+            "data",
+            "type",
+            "items",
+            "classes",
+            "methods",
+            "fields",
+            "pagination",
+        }
+        for key, value in parsed_response.items():
+            if key not in reserved_keys:
+                result[key] = value
 
         return result
 

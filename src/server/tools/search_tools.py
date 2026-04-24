@@ -13,6 +13,7 @@ License: See LICENSE file
 
 import asyncio
 import logging
+import uuid
 from typing import Optional
 
 from src.server.config import get_from_jadx, get_search_progress
@@ -23,6 +24,7 @@ logger = logging.getLogger("jadx-mcp-server.search")
 
 async def _poll_progress(
     report_progress,
+    request_id: str = None,
     poll_interval: float = 2.0,
     budget_seconds: float = 600.0,
     absolute_max_seconds: float = 3600.0,
@@ -89,7 +91,7 @@ async def _poll_progress(
             # dynamic timeout check: approaching the current deadline?
             if elapsed >= current_deadline * extension_threshold and seen_running:
                 # Ask the plugin: "Are you still searching?"
-                check = await get_search_progress()
+                check = await get_search_progress(request_id)
                 check_state = check.get("state", "unknown")
                 if check_state == "running":
                     # plugin confirms it's still working => grant extension
@@ -133,7 +135,7 @@ async def _poll_progress(
                     cancel_search_event.set()
                 break
 
-            progress = await get_search_progress()
+            progress = await get_search_progress(request_id)
             # Java sends state in lowercase: "idle", "running", "completed", "failed"
             state = progress.get("state", "unknown")
 
@@ -215,9 +217,10 @@ async def search_method_by_name(method_name: str, report_progress=None) -> dict:
         dict: List of all classes containing methods with matching names
     """
     # Fire search request and progress poller concurrently
-    progress_task = asyncio.create_task(_poll_progress(report_progress))
+    request_id = uuid.uuid4().hex
+    progress_task = asyncio.create_task(_poll_progress(report_progress, request_id=request_id))
     try:
-        result = await get_from_jadx("search-method", {"method_name": method_name})
+        result = await get_from_jadx("search-method", {"method_name": method_name, "request_id": request_id})
     finally:
         progress_task.cancel()
         try:
@@ -230,7 +233,7 @@ async def search_method_by_name(method_name: str, report_progress=None) -> dict:
 async def search_classes_by_keyword(
     search_term: str,
     package: str = "",
-    search_in: str = "code",
+    search_in: str = "class",
     offset: int = 0,
     count: int = 20,
     report_progress=None,
@@ -274,7 +277,8 @@ async def search_classes_by_keyword(
         dict: Paginated list of classes containing the search term, with metadata about matches
     """
     # Fire search request and progress poller concurrently
-    progress_task = asyncio.create_task(_poll_progress(report_progress))
+    request_id = uuid.uuid4().hex
+    progress_task = asyncio.create_task(_poll_progress(report_progress, request_id=request_id))
     try:
         result = await PaginationUtils.get_paginated_data(
             endpoint="search-classes-by-keyword",
@@ -284,6 +288,7 @@ async def search_classes_by_keyword(
                 "search_term": search_term,
                 "package": package,
                 "search_in": search_in,
+                "request_id": request_id,
             },
             data_extractor=lambda parsed: parsed.get("classes", []),
             fetch_function=get_from_jadx,
