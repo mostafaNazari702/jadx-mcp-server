@@ -13,7 +13,7 @@ from src.server.config import get_from_jadx
 from src.PaginationUtils import PaginationUtils
 
 
-async def get_xrefs_to_class(class_name: str, offset: int = 0, count: int = 20) -> dict:
+async def get_xrefs_to_class(class_name: str, offset: int = 0, count: int = 20, include_lines: bool = False) -> dict:
     """
     Find all references to a class (including constructor calls).
 
@@ -21,6 +21,11 @@ async def get_xrefs_to_class(class_name: str, offset: int = 0, count: int = 20) 
         class_name: Fully qualified class name
         offset: Starting index for pagination (default: 0)
         count: Number of references to return (default: 20)
+        include_lines: When True, each reference entry will include a "lines"
+            field listing 1-based line numbers (comma-separated) inside the
+            referencing class where the target class is used. Default: False.
+            Note: line list is class-level (multiple method entries from the
+            same referencing class share the same value).
 
     Returns:
         dict: Paginated list of locations where the class is referenced
@@ -28,17 +33,20 @@ async def get_xrefs_to_class(class_name: str, offset: int = 0, count: int = 20) 
     MCP Tool: get_xrefs_to_class
     Description: Finds all code locations that instantiate or reference a class
     """
+    params = {"class_name": class_name}
+    if include_lines:
+        params["include_lines"] = "true"
     return await PaginationUtils.get_paginated_data(
         endpoint="xrefs-to-class",
         offset=offset,
         count=count,
-        additional_params={"class_name": class_name},
+        additional_params=params,
         data_extractor=lambda parsed: parsed.get("references", []),
         fetch_function=get_from_jadx
     )
 
 
-async def get_xrefs_to_method(class_name: str, method_name: str, offset: int = 0, count: int = 20) -> dict:
+async def get_xrefs_to_method(class_name: str, method_name: str, offset: int = 0, count: int = 20, include_lines: bool = False) -> dict:
     """
     Find all references to a method (includes overrides).
 
@@ -47,6 +55,11 @@ async def get_xrefs_to_method(class_name: str, method_name: str, offset: int = 0
         method_name: Method name (can include signature)
         offset: Starting index for pagination (default: 0)
         count: Number of references to return (default: 20)
+        include_lines: When True, each reference entry will include a "lines"
+            field listing 1-based line numbers (comma-separated) inside the
+            referencing class where the target method is invoked. Default: False.
+            Note: line list is class-level (per referencing class, not per
+            individual method-entry).
 
     Returns:
         dict: Paginated list of locations where the method is called
@@ -54,17 +67,20 @@ async def get_xrefs_to_method(class_name: str, method_name: str, offset: int = 0
     MCP Tool: get_xrefs_to_method
     Description: Tracks all invocations of a specific method across the APK
     """
+    params = {"class_name": class_name, "method_name": method_name}
+    if include_lines:
+        params["include_lines"] = "true"
     return await PaginationUtils.get_paginated_data(
         endpoint="xrefs-to-method",
         offset=offset,
         count=count,
-        additional_params={"class_name": class_name, "method_name": method_name},
+        additional_params=params,
         data_extractor=lambda parsed: parsed.get("references", []),
         fetch_function=get_from_jadx
     )
 
 
-async def get_xrefs_to_field(class_name: str, field_name: str, offset: int = 0, count: int = 20) -> dict:
+async def get_xrefs_to_field(class_name: str, field_name: str, offset: int = 0, count: int = 20, include_lines: bool = False) -> dict:
     """
     Find all references to a field.
 
@@ -73,6 +89,10 @@ async def get_xrefs_to_field(class_name: str, field_name: str, offset: int = 0, 
         field_name: Field/variable name
         offset: Starting index for pagination (default: 0)
         count: Number of references to return (default: 20)
+        include_lines: When True, each reference entry will include a "lines"
+            field listing 1-based line numbers (comma-separated) inside the
+            referencing class where the target field is read or written.
+            Default: False. Note: line list is class-level.
 
     Returns:
         dict: Paginated list of locations where the field is accessed
@@ -80,11 +100,14 @@ async def get_xrefs_to_field(class_name: str, field_name: str, offset: int = 0, 
     MCP Tool: get_xrefs_to_field
     Description: Identifies all read/write operations on a class field
     """
+    params = {"class_name": class_name, "field_name": field_name}
+    if include_lines:
+        params["include_lines"] = "true"
     return await PaginationUtils.get_paginated_data(
         endpoint="xrefs-to-field",
         offset=offset,
         count=count,
-        additional_params={"class_name": class_name, "field_name": field_name},
+        additional_params=params,
         data_extractor=lambda parsed: parsed.get("references", []),
         fetch_function=get_from_jadx
     )

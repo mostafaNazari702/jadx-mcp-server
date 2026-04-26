@@ -45,12 +45,13 @@ async def get_manifest_component(component_type: str, only_exported: bool = Fals
     manifest_data = await get_android_manifest()
     manifest_xml = manifest_data.get("content", "")
     if not manifest_xml:
-        return {"error": "AndroidManifest.xml content is empty, no data to parse"}
+        return {"ok": False, "error": "AndroidManifest.xml content is empty, no data to parse"}
 
     supported_types = {"activity", "provider", "service", "receiver"}
     ALIAS_MAP = {"activity": ["activity-alias"]}
     if component_type not in supported_types:
         return {
+            "ok": False,
             "error": f"Unsupported component type: {component_type}, exact match required",
             "supported_types": list(supported_types)
         }
@@ -79,9 +80,9 @@ async def get_manifest_component(component_type: str, only_exported: bool = Fals
         }
 
     except ET.ParseError as e:
-        return {"error": f"AndroidManifest.xml parse failed: {str(e)}"}
+        return {"ok": False, "error": f"AndroidManifest.xml parse failed: {str(e)}"}
     except Exception as e:
-        return {"error": f"Unexpected error when fetching component: {str(e)}"}
+        return {"ok": False, "error": f"Unexpected error when fetching component: {str(e)}"}
 
 
 async def get_strings(offset: int = 0, count: int = 0) -> dict:

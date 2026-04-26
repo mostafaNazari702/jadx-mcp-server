@@ -334,28 +334,28 @@ async def debug_get_variables() -> dict:
 
 
 @mcp.tool()
-async def get_xrefs_to_class(class_name: str, offset: int = 0, count: int = 20) -> dict:
-    """Find all references to a class."""
-    return await tools.xrefs_tools.get_xrefs_to_class(class_name, offset, count)
+async def get_xrefs_to_class(class_name: str, offset: int = 0, count: int = 20, include_lines: bool = False) -> dict:
+    """Find all references to a class. Set include_lines=True to annotate each entry with 1-based line numbers (class-level hint) inside the referencing class."""
+    return await tools.xrefs_tools.get_xrefs_to_class(class_name, offset, count, include_lines)
 
 
 @mcp.tool()
 async def get_xrefs_to_method(
-    class_name: str, method_name: str, offset: int = 0, count: int = 20
+    class_name: str, method_name: str, offset: int = 0, count: int = 20, include_lines: bool = False
 ) -> dict:
-    """Find all references to a method."""
+    """Find all references to a method. Set include_lines=True to annotate each entry with 1-based line numbers (class-level hint) inside the referencing class."""
     return await tools.xrefs_tools.get_xrefs_to_method(
-        class_name, method_name, offset, count
+        class_name, method_name, offset, count, include_lines
     )
 
 
 @mcp.tool()
 async def get_xrefs_to_field(
-    class_name: str, field_name: str, offset: int = 0, count: int = 20
+    class_name: str, field_name: str, offset: int = 0, count: int = 20, include_lines: bool = False
 ) -> dict:
-    """Find all references to a field."""
+    """Find all references to a field. Set include_lines=True to annotate each entry with 1-based line numbers (class-level hint) inside the referencing class."""
     return await tools.xrefs_tools.get_xrefs_to_field(
-        class_name, field_name, offset, count
+        class_name, field_name, offset, count, include_lines
     )
 
 
