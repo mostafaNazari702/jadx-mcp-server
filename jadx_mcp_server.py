@@ -12,6 +12,7 @@ See the file 'LICENSE' for copying permission
 import argparse
 import logging
 import sys
+from typing import Optional
 from fastmcp import FastMCP, Context
 from src.banner import jadx_mcp_server_banner
 from src.server import config, tools
@@ -93,8 +94,9 @@ async def get_method_by_name(class_name: str, method_name: str) -> dict:
 
 
 @mcp.tool()
-async def get_all_classes(offset: int = 0, count: int = 0) -> dict:
-    """Returns a list of all classes in the project with pagination support."""
+async def get_all_classes(offset: int = 0, count: int = 0, limit: Optional[int] = None) -> dict:
+    """Returns a list of all classes in the project with pagination support. (`limit` is an alias for `count`. I will spam that a few times but its importanto to be AWARE)"""
+    if limit is not None: count = limit
     return await tools.class_tools.get_all_classes(offset, count)
 
 
@@ -132,6 +134,7 @@ async def search_classes_by_keyword(
     search_in: str = "class",
     offset: int = 0,
     count: int = 20,
+    limit: Optional[int] = None,
     ctx: Context = None,
 ) -> dict:
     """Search for classes containing a specific keyword with flexible filtering options.
@@ -179,7 +182,9 @@ async def search_classes_by_keyword(
     MCP Tool: search_classes_by_keyword
     Description: Advanced search tool that finds classes matching a keyword with package filtering
                  and scope targeting capabilities. Use this when you need to find specific code
-                 patterns, class names, method names, or other identifiers across the decompiled APK."""
+                 patterns, class names, method names, or other identifiers across the decompiled APK.
+                 (`limit` is an alias for `count`.)"""
+    if limit is not None: count = limit
     report_progress = ctx.report_progress if ctx else None
     return await tools.search_tools.search_classes_by_keyword(
         search_term, package, search_in, offset, count, report_progress=report_progress
@@ -214,14 +219,16 @@ async def get_android_manifest() -> dict:
 
 
 @mcp.tool()
-async def get_strings(offset: int = 0, count: int = 0) -> dict:
-    """Retrieve contents of strings.xml files."""
+async def get_strings(offset: int = 0, count: int = 0, limit: Optional[int] = None) -> dict:
+    """Retrieve contents of strings.xml files. (`limit` is an alias for `count`.)"""
+    if limit is not None: count = limit
     return await tools.resource_tools.get_strings(offset, count)
 
 
 @mcp.tool()
-async def get_all_resource_file_names(offset: int = 0, count: int = 0) -> dict:
-    """Retrieve all resource files names."""
+async def get_all_resource_file_names(offset: int = 0, count: int = 0, limit: Optional[int] = None) -> dict:
+    """Retrieve all resource files names. (`limit`` is an alias for `count`.)"""
+    if limit is not None: count = limit
     return await tools.resource_tools.get_all_resource_file_names(offset, count)
 
 
@@ -238,8 +245,9 @@ async def get_main_application_classes_names() -> dict:
 
 
 @mcp.tool()
-async def get_main_application_classes_code(offset: int = 0, count: int = 0) -> dict:
-    """Fetch main application classes' code with pagination."""
+async def get_main_application_classes_code(offset: int = 0, count: int = 0, limit: Optional[int] = None) -> dict:
+    """Fetch main application classes' code with pagination. (`limit` is an alias for `count`.)"""
+    if limit is not None: count = limit
     return await tools.class_tools.get_main_application_classes_code(offset, count)
 
 
@@ -334,16 +342,18 @@ async def debug_get_variables() -> dict:
 
 
 @mcp.tool()
-async def get_xrefs_to_class(class_name: str, offset: int = 0, count: int = 20, include_lines: bool = False) -> dict:
-    """Find all references to a class. Set include_lines=True to annotate each entry with 1-based line numbers (class-level hint) inside the referencing class."""
+async def get_xrefs_to_class(class_name: str, offset: int = 0, count: int = 20, limit: Optional[int] = None, include_lines: bool = False) -> dict:
+    """Find all references to a class. Set include_lines=True to annotate each entry with 1-based line numbers (class-level hint) inside the referencing class. (`limit` is an alias for `count`.)"""
+    if limit is not None: count = limit
     return await tools.xrefs_tools.get_xrefs_to_class(class_name, offset, count, include_lines)
 
 
 @mcp.tool()
 async def get_xrefs_to_method(
-    class_name: str, method_name: str, offset: int = 0, count: int = 20, include_lines: bool = False
+    class_name: str, method_name: str, offset: int = 0, count: int = 20, limit: Optional[int] = None, include_lines: bool = False
 ) -> dict:
-    """Find all references to a method. Set include_lines=True to annotate each entry with 1-based line numbers (class-level hint) inside the referencing class."""
+    """Find all references to a method. Set include_lines=True to annotate each entry with 1-based line numbers (class-level hint) inside the referencing class. (`limit` is an alias for `count`.)"""
+    if limit is not None: count = limit
     return await tools.xrefs_tools.get_xrefs_to_method(
         class_name, method_name, offset, count, include_lines
     )
@@ -351,9 +361,10 @@ async def get_xrefs_to_method(
 
 @mcp.tool()
 async def get_xrefs_to_field(
-    class_name: str, field_name: str, offset: int = 0, count: int = 20, include_lines: bool = False
+    class_name: str, field_name: str, offset: int = 0, count: int = 20, limit: Optional[int] = None, include_lines: bool = False
 ) -> dict:
-    """Find all references to a field. Set include_lines=True to annotate each entry with 1-based line numbers (class-level hint) inside the referencing class."""
+    """Find all references to a field. Set include_lines=True to annotate each entry with 1-based line numbers (class-level hint) inside the referencing class. (`limit` is an alias for `count`.)"""
+    if limit is not None: count = limit
     return await tools.xrefs_tools.get_xrefs_to_field(
         class_name, field_name, offset, count, include_lines
     )
@@ -374,6 +385,7 @@ async def find_string_literals(
     max_hits: int = 5000,
     offset: int = 0,
     count: int = 50,
+    limit: Optional[int] = None,
     ctx: Context = None,
 ) -> dict:
     """Find string literals (\"...\") whose value matches `pattern`. Returns line-level hits with snippets.
@@ -392,8 +404,9 @@ async def find_string_literals(
         max_hits: Hard cap on total hits collected before truncation (default 5000,
             absolute ceiling 50000). When the cap is reached the response includes
             `truncated: true`.
-        offset, count: Pagination over the (capped) result set.
+        offset, count: Pagination over the (capped) result set. (`limit` is an alias for `count`.)
     """
+    if limit is not None: count = limit
     report_progress = ctx.report_progress if ctx else None
     return await _adv_find_string_literals(
         pattern=pattern, regex=regex, case_sensitive=case_sensitive,
@@ -412,6 +425,7 @@ async def grep_code(
     max_hits: int = 5000,
     offset: int = 0,
     count: int = 50,
+    limit: Optional[int] = None,
     ctx: Context = None,
 ) -> dict:
     """Full-source regex grep with line-snippet context. Returns one entry per matching line.
@@ -429,8 +443,9 @@ async def grep_code(
         max_hits: Hard cap on total hits collected before truncation (default 5000,
             absolute ceiling 50000). When the cap is reached the response includes
             `truncated: true`.
-        offset, count: Pagination over the (capped) result set.
+        offset, count: Pagination over the (capped) result set. (`limit` is an alias for `count`.)
     """
+    if limit is not None: count = limit
     report_progress = ctx.report_progress if ctx else None
     return await _adv_grep_code(
         pattern=pattern, regex=regex, case_sensitive=case_sensitive,
@@ -449,6 +464,7 @@ async def find_methods_by_signature(
     package: str = "",
     offset: int = 0,
     count: int = 50,
+    limit: Optional[int] = None,
     ctx: Context = None,
 ) -> dict:
     """Filter methods by structural signature using smali metadata (no decompilation needed).
@@ -466,10 +482,11 @@ async def find_methods_by_signature(
         param_count: Exact arg count. Pass -1 (default) for \"any\".
         class_pattern: Regex on containing class FQN.
         package: Faster alternative when only a package prefix filter is needed.
-        offset, count: Pagination.
+        offset, count: Pagination. (`limit` is an alias for `count`.)
 
     Returns: items: [{class, method, params, return_type, access}].
     """
+    if limit is not None: count = limit
     report_progress = ctx.report_progress if ctx else None
     return await _adv_find_methods_by_signature(
         name_pattern=name_pattern, return_type=return_type,
@@ -487,6 +504,7 @@ async def find_string_constant_dispatchers(
     max_hits: int = 5000,
     offset: int = 0,
     count: int = 50,
+    limit: Optional[int] = None,
     ctx: Context = None,
 ) -> dict:
     """Find methods that branch on a string returned by a known "key getter".
@@ -520,12 +538,13 @@ async def find_string_constant_dispatchers(
             Add e.g. "get" to widen, restrict to "optString" to narrow.
         package: Optional package prefix filter.
         max_hits: Cap on dispatcher methods (absolute ceiling 50000).
-        offset, count: Pagination over the (capped) result set.
+        offset, count: Pagination over the (capped) result set. (`limit` is an alias for `count`.)
 
     Returns: standardized envelope wrapping
         items: [{class, method, params, return_type, access,
                  key_getter, getter_owner, key_literal, cases, case_count}]
     """
+    if limit is not None: count = limit
     report_progress = ctx.report_progress if ctx else None
     return _envelope_from_jadx(
         await _adv_find_string_constant_dispatchers(
@@ -559,15 +578,16 @@ async def get_callees(
 
 @mcp.tool()
 async def get_subclasses(
-    class_name: str, transitive: bool = False, offset: int = 0, count: int = 100
+    class_name: str, transitive: bool = False, offset: int = 0, count: int = 100, limit: Optional[int] = None
 ) -> dict:
     """List classes that extend the given class.
 
     Args:
         class_name: Fully-qualified class name (Java dotted form).
         transitive: If True, include sub-subclasses recursively. Default False (direct only).
-        offset, count: Pagination.
+        offset, count: Pagination. (`limit` is an alias for `count`.)
     """
+    if limit is not None: count = limit
     return await _adv_get_subclasses(class_name, transitive=transitive, offset=offset, count=count)
 
 
@@ -585,20 +605,21 @@ async def get_superclasses(class_name: str) -> dict:
 
 @mcp.tool()
 async def get_implementations(
-    interface_name: str, offset: int = 0, count: int = 100
+    interface_name: str, offset: int = 0, count: int = 100, limit: Optional[int] = None
 ) -> dict:
     """List every class that implements the given interface (directly OR via a parent).
 
     Args:
         interface_name: Fully-qualified interface name.
-        offset, count: Pagination.
+        offset, count: Pagination. (`limit` is an alias for `count`.)
     """
+    if limit is not None: count = limit
     return await _adv_get_implementations(interface_name, offset=offset, count=count)
 
 
 @mcp.tool()
 async def find_android_components_deep(
-    component_type: str, offset: int = 0, count: int = 100
+    component_type: str, offset: int = 0, count: int = 100, limit: Optional[int] = None
 ) -> dict:
     """Find Android components by descending from framework base classes.
 
@@ -617,8 +638,9 @@ async def find_android_components_deep(
             application     — android.app.Application
             webview-client  — WebViewClient + WebChromeClient
             webview         — android.webkit.WebView subclasses
-        offset, count: Pagination.
+        offset, count: Pagination. (`limit` is an alias for `count`.)
     """
+    if limit is not None: count = limit
     return await _adv_find_android_components_deep(component_type, offset=offset, count=count)
 
 
